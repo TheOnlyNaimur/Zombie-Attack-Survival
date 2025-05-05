@@ -311,6 +311,8 @@ def keyboardListener(key, x, y):
         playerPosition[0] -= movementSpeed
     elif key == b'd':
         playerPosition[0] += movementSpeed
+    elif key == b'n':
+        maxMissedBullets+=10
     playerPosition[0] = max(-GRID_LENGTH, min(GRID_LENGTH, playerPosition[0]))
 
 def mouseListener(button, state, x, y):

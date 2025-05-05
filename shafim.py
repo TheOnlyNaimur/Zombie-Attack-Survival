@@ -5,25 +5,25 @@ from OpenGL.GLUT.fonts import GLUT_BITMAP_HELVETICA_18
 import math
 import random
 
+
 camera_pos = (0, 500, 500)
 fovY = 120
-GRID_LENGTH = 600
+GRID_LENGTH = 700
 rand_var = 423
 
-playerPosition = [0, 0, 0]
-playerAngle = 0 
+playerPosition = [0, 0, 620]
+playerAngle = 180
 movementSpeed = 10
-rotationSpeed = 5
+roundno = 1
 
 bullets = [] 
-missedBullets = 0
+maxMissedBullets = 20
 gameScore = 0
 
 enemies = []  
-numOfEnemies = 5
+numOfEnemies = 20
 
-cheatMode = False
-auto_camera = False
+
 followCamera = False
 playerLife = 5
 gameOver = False
@@ -31,7 +31,7 @@ gameOver = False
 i=0
 while i<numOfEnemies:
     x = random.randint(-GRID_LENGTH//2, GRID_LENGTH//2)
-    z = random.randint(-GRID_LENGTH//2, GRID_LENGTH//2)
+    z = -GRID_LENGTH
     scale = 1.0
     direction = 0.01
     enemies.append([x, 0, z, scale, direction])
@@ -59,20 +59,21 @@ def draw_player():
     glTranslatef(playerPosition[0], playerPosition[1], playerPosition[2])
     glRotatef(playerAngle, 0, 1, 0)
 
-
+    # Body (cuboid)
     glPushMatrix()
     glScalef(1, 2, 1)
     glColor3f(0.5, 0.5, 1)
     glutSolidCube(30)
     glPopMatrix()
 
-    
+    # Head (sphere)
     glPushMatrix()
     glTranslatef(0, 35, 0)
     glColor3f(1, 0.8, 0.6)
     glutSolidSphere(15, 10, 10)
     glPopMatrix()
 
+    # canon (cylinder)
     glPushMatrix()
     glTranslatef(0, 10, 15)  
     glColor3f(0, 0, 0)
@@ -109,10 +110,15 @@ def draw_grid():
     for x in range(-size, size, step):
         for z in range(-size, size, step):
             glBegin(GL_QUADS)
-            if toggle:
-                glColor3f(0.2, 0.4, 1.0)  
+            # Set light green color for the range 700 to 600
+            if 550 <= z <= 700:
+                glColor3f(0.6, 1.0, 0.6)  # Light green
             else:
-                glColor3f(1.0, 1.0, 0.2)
+                # Alternate colors for the rest of the grid
+                if toggle:
+                    glColor3f(0.0, 0.5, 0.0)  # Deep Green
+                else:
+                    glColor3f(1.0, 1.0, 0.2)  # Yellow
             glVertex3f(x, 0, z)
             glVertex3f(x + step, 0, z)
             glVertex3f(x + step, 0, z + step)
@@ -123,7 +129,7 @@ def draw_grid():
 
     wallHeight = 100
 
-    glColor3f(1.0, 0.0, 0.0)
+    glColor3f(0.53, 0.81, 0.92)  
     glBegin(GL_QUADS)
     glVertex3f(-size, 0, -size)
     glVertex3f(size, 0, -size)
@@ -178,13 +184,39 @@ def setupCamera():
         x, y, z = camera_pos
         gluLookAt(x, y, z, 0, 0, 0, 0, 1, 0)
 
+def increaseZombieDifficulty(num_new_zombies, speed_multiplier):
+    global enemies
+    # Increase speed of existing zombies
+    for e in enemies:
+        e[4] *= speed_multiplier
+
+    # Respawn new zombies
+    for _ in range(num_new_zombies):
+        x = random.randint(-GRID_LENGTH // 2, GRID_LENGTH // 2)
+        z = -GRID_LENGTH
+        scale = 1.0
+        direction = 0.02 * speed_multiplier  # Higher speed for new zombies
+        enemies.append([x, 0, z, scale, direction])
 
 def idle():
-    global enemies, bullets, missedBullets, playerLife, gameScore, playerPosition, gameOver, playerAngle, cheatMode
+    global enemies, bullets, maxMissedBullets, playerLife, gameScore, playerPosition, gameOver, playerAngle, roundno
 
     if gameOver:
         glutPostRedisplay()
         return
+    
+    if gameScore == 10 and roundno == 1:
+        roundno = 2
+        increaseZombieDifficulty(5, 2.0)  # Respawn 5 zombies, double speed
+    elif gameScore == 50 and roundno == 2:
+        roundno = 3
+        increaseZombieDifficulty(5, 2.5)  # Respawn 5 zombies, increase speed
+    elif gameScore == 100 and roundno == 3:
+        roundno = 4
+        increaseZombieDifficulty(5, 3.0)  # Respawn 5 zombies, increase speed
+    elif gameScore == 200 and roundno == 4:
+        roundno = 5  # Final round
+        increaseZombieDifficulty(5, 3.5)
 
     for e in enemies:
         e[3] += e[4]
@@ -198,8 +230,15 @@ def idle():
         b[2] += math.cos(angle_rad) * 20
 
         if abs(b[0]) > GRID_LENGTH or abs(b[2]) > GRID_LENGTH:
-            missedBullets += 1
-            removeBullets.append(i)
+            maxMissedBullets -= 1
+            if maxMissedBullets <= 0:
+                gameOver = True
+                bullets = []
+                enemies = []
+                break
+            else:
+                removeBullets.append(i)
+            
 
     bulletHit = []
     for bi, b in enumerate(bullets):
@@ -233,35 +272,25 @@ def idle():
             if playerLife <= 0:
                 gameOver = True
                 enemies = []
-    if cheatMode and not gameOver:
-        playerAngle += 2 
-        playerAngle %= 360 
-
-        if random.random() < 0.2: 
-            px, py, pz = playerPosition
-            bullets.append([px, py + 10, pz, playerAngle])
 
 
     glutPostRedisplay()
 def respawnEnemy(enemy):
-    while True:
-        new_x = random.randint(-GRID_LENGTH//2, GRID_LENGTH//2)
-        new_z = random.randint(-GRID_LENGTH//2, GRID_LENGTH//2)
-        dist = math.sqrt((new_x - playerPosition[0]) ** 2 + (new_z - playerPosition[2]) ** 2)
-        if dist > 100:  
-            break
+    new_x = random.randint(-GRID_LENGTH // 2, GRID_LENGTH // 2)  
+    new_z = -GRID_LENGTH 
     enemy[0] = new_x
     enemy[2] = new_z
 
 
 def keyboardListener(key, x, y):
-    global playerPosition,playerAngle, bullets, playerLife, missedBullets, gameScore, gameOver, enemies,cheatMode, followCamera
+    global playerPosition,playerAngle, bullets, playerLife, maxMissedBullets, gameScore, gameOver, enemies, followCamera, roundno, playerAngle
     if key == b'r':
-        playerPosition = [0, 0, 0]
-        playerAngle = 0
+        playerPosition = [0, 0, 650]
+        playerAngle = 180
         bullets = []
         playerLife = 5
-        missedBullets = 0
+        maxMissedBullets = 0
+        roundno = 1
         gameScore = 0
         gameOver = False
         enemies = []
@@ -269,33 +298,20 @@ def keyboardListener(key, x, y):
         i = 0
         while i<numOfEnemies:
             x = random.randint(-GRID_LENGTH//2, GRID_LENGTH//2)
-            z = random.randint(-GRID_LENGTH//2, GRID_LENGTH//2)
+            z = -GRID_LENGTH
             scale = 1.0
             direction = 0.01
             enemies.append([x, 0, z, scale, direction])
             i+=1
+    
     if gameOver:
         return
-    if key == b'w':
-        rad = math.radians(playerAngle)
-        playerPosition[0] += math.sin(rad) * movementSpeed
-        playerPosition[2] += math.cos(rad) * movementSpeed
-    elif key == b's':
-        rad = math.radians(playerAngle)
-        playerPosition[0] -= math.sin(rad) * movementSpeed
-        playerPosition[2] -= math.cos(rad) * movementSpeed
+
     elif key == b'a':
-        playerAngle += rotationSpeed
+        playerPosition[0] -= movementSpeed
     elif key == b'd':
-        playerAngle -= rotationSpeed
-    elif key == b'c':
-        cheatMode = not cheatMode
-    elif key == b'v':
-        followCamera = not followCamera
-
-
+        playerPosition[0] += movementSpeed
     playerPosition[0] = max(-GRID_LENGTH, min(GRID_LENGTH, playerPosition[0]))
-    playerPosition[2] = max(-GRID_LENGTH, min(GRID_LENGTH, playerPosition[2]))
 
 def mouseListener(button, state, x, y):
     global gameOver
@@ -343,9 +359,10 @@ def showScreen():
         draw_text(10, 770, "Game Over! Press 'R' to restart.")
         draw_text(10, 740, f"Final Score: {gameScore}")
     else:
-        draw_text(10, 770, f"Player life Remaining: {playerLife}")
-        draw_text(10, 740, f"Game score: {gameScore}")
-        draw_text(10, 710, f"Player Bullet Missed: {missedBullets}")
+        draw_text(10, 780, f"Round: {roundno}")
+        draw_text(10, 750, f"Player HP: {playerLife}")
+        draw_text(10, 720, f"Game score: {gameScore}")
+        draw_text(10, 690, f"Bullet Missed left: {maxMissedBullets}")
     glutSwapBuffers()
 
 def main():
@@ -359,7 +376,6 @@ def main():
     glutKeyboardFunc(keyboardListener)
     glutSpecialFunc(specialKeyListener)
     glutMouseFunc(mouseListener)
-    glEnable(GL_DEPTH_TEST)
     glutMainLoop()
 
 if __name__ == "__main__":

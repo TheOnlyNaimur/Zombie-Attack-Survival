@@ -34,7 +34,7 @@ while i<numOfEnemies:
     z = -GRID_LENGTH
     scale = 1.0
     direction = 0.01
-    enemies.append([x, 0, z, scale, direction])
+    enemies.append([x, 0, z, scale, direction, 0.5])
     i+=1
 
 def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
@@ -184,19 +184,19 @@ def setupCamera():
         x, y, z = camera_pos
         gluLookAt(x, y, z, 0, 0, 0, 0, 1, 0)
 
-def increaseZombieDifficulty(num_new_zombies, speed_multiplier):
+def increaseZombieDifficulty(num_new_zombies, speedMultiplier):
     global enemies
     # Increase speed of existing zombies
     for e in enemies:
-        e[4] *= speed_multiplier
+        e[5] *= speedMultiplier
 
     # Respawn new zombies
     for _ in range(num_new_zombies):
         x = random.randint(-GRID_LENGTH // 2, GRID_LENGTH // 2)
         z = -GRID_LENGTH
         scale = 1.0
-        direction = 0.02 * speed_multiplier  # Higher speed for new zombies
-        enemies.append([x, 0, z, scale, direction])
+        direction = 0.02 * speedMultiplier  # Higher speed for new zombies
+        enemies.append([x, 0, z, scale, direction, speedMultiplier])
 
 def idle():
     global enemies, bullets, maxMissedBullets, playerLife, gameScore, playerPosition, gameOver, playerAngle, roundno
@@ -207,16 +207,16 @@ def idle():
     
     if gameScore == 10 and roundno == 1:
         roundno = 2
-        increaseZombieDifficulty(5, 2.0)  # Respawn 5 zombies, double speed
+        increaseZombieDifficulty(5, 1)  # Respawn 5 zombies, double speed
     elif gameScore == 50 and roundno == 2:
         roundno = 3
-        increaseZombieDifficulty(5, 2.5)  # Respawn 5 zombies, increase speed
+        increaseZombieDifficulty(5, 2)  # Respawn 5 zombies, increase speed
     elif gameScore == 100 and roundno == 3:
         roundno = 4
-        increaseZombieDifficulty(5, 3.0)  # Respawn 5 zombies, increase speed
+        increaseZombieDifficulty(5, 3)  # Respawn 5 zombies, increase speed
     elif gameScore == 200 and roundno == 4:
         roundno = 5  # Final round
-        increaseZombieDifficulty(5, 3.5)
+        increaseZombieDifficulty(5, 4)
 
     for e in enemies:
         e[3] += e[4]
@@ -263,8 +263,8 @@ def idle():
         dz = playerPosition[2] - e[2]
         length = math.sqrt(dx**2 + dz**2)
         if length > 1e-5:  
-            e[0] += (dx / length) * 0.25  
-            e[2] += (dz / length) * 0.25
+            e[0] += (dx / length) * e[5]  
+            e[2] += (dz / length) * e[5]
         hitBox = math.sqrt((e[0] - playerPosition[0])**2 + (e[2] - playerPosition[2])**2)
         if hitBox < 30:
             playerLife -= 1
@@ -276,7 +276,7 @@ def idle():
 
     glutPostRedisplay()
 def respawnEnemy(enemy):
-    new_x = random.randint(-GRID_LENGTH // 2, GRID_LENGTH // 2)  
+    new_x = random.randint(-GRID_LENGTH-100, GRID_LENGTH-100)
     new_z = -GRID_LENGTH 
     enemy[0] = new_x
     enemy[2] = new_z
@@ -284,34 +284,33 @@ def respawnEnemy(enemy):
 
 def keyboardListener(key, x, y):
     global playerPosition,playerAngle, bullets, playerLife, maxMissedBullets, gameScore, gameOver, enemies, followCamera, roundno, playerAngle
-    if key == b'r':
+    if key == b'r' or key == b'R':
         playerPosition = [0, 0, 650]
         playerAngle = 180
         bullets = []
         playerLife = 5
-        maxMissedBullets = 0
+        maxMissedBullets = 20
         roundno = 1
         gameScore = 0
         gameOver = False
         enemies = []
-        numOfEnemies = 5
+        numOfEnemies = 20
         i = 0
         while i<numOfEnemies:
-            x = random.randint(-GRID_LENGTH//2, GRID_LENGTH//2)
+            x = random.randint(-GRID_LENGTH-20, GRID_LENGTH-20)
             z = -GRID_LENGTH
             scale = 1.0
             direction = 0.01
-            enemies.append([x, 0, z, scale, direction])
+            enemies.append([x, 0, z, scale, direction,0.5])
             i+=1
     
     if gameOver:
         return
-
-    elif key == b'a':
+    elif key == b'a' or key == b'A':
         playerPosition[0] -= movementSpeed
-    elif key == b'd':
+    elif key == b'd' or key == b'D':
         playerPosition[0] += movementSpeed
-    elif key == b'n':
+    elif key == b'n' or key == b'N':
         maxMissedBullets+=10
     playerPosition[0] = max(-GRID_LENGTH, min(GRID_LENGTH, playerPosition[0]))
 

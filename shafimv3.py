@@ -1,3 +1,4 @@
+# Import necessary OpenGL modules and libraries
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -5,41 +6,49 @@ from OpenGL.GLUT.fonts import GLUT_BITMAP_HELVETICA_18
 import math
 import random
 
+# Initialize global variables for camera, player, and game state
+camera_pos = (0, 500, 500)  # Camera position
+fovY = 120  # Field of view
+GRID_LENGTH = 700  # Grid size
+rand_var = 423  # Random seed
 
-camera_pos = (0, 500, 500)
-fovY = 120
-GRID_LENGTH = 700
-rand_var = 423
+# Player attributes
+playerPosition = [0, 0, 620]  # Player's position
+playerAngle = 180  # Player's angle
+movementSpeed = 10  # Player's movement speed
+roundno = 1  # Current round number
 
-playerPosition = [0, 0, 620]
-playerAngle = 180
-movementSpeed = 10
-roundno = 1
+# Game state variables
+bullets = []  # List of bullets
+maxMissedBullets = 20  # Maximum missed bullets allowed
+gameScore = 0  # Player's score
 
-bullets = [] 
-maxMissedBullets = 20
-gameScore = 0
+# Enemy attributes
+enemies = []  # List of enemies
+numOfEnemies = 20  # Initial number of enemies
 
-enemies = []  
-numOfEnemies = 20
+# Game control flags
+followCamera = False  # Toggle for follow camera
+playerLife = 5  # Player's life
+gameOver = False  # Game over flag
+gamePaused = False  # Game paused flag
+roundTransition = False  # Round transition flag
 
-
-followCamera = False
-playerLife = 5
-gameOver = False
-gamePaused = False
-roundTransition = False
-
-i=0
-while i<numOfEnemies:
-    x = random.randint(-GRID_LENGTH-20, GRID_LENGTH-20)
+# Initialize enemies with randomized attributes
+# 10% of enemies have scale 2.0 and increased health
+# Remaining enemies have scale 1.0 and default health
+i = 0
+while i < numOfEnemies:
+    x = random.randint(-GRID_LENGTH - 20, GRID_LENGTH - 20)
     z = -GRID_LENGTH
-    scale = 1.0
+    scale = 2.0 if random.random() < 0.1 else 1.0  # 10% chance for scale 2.0, otherwise 1.0
     direction = 0.01
-    enemies.append([x, 0, z, scale, direction, 0.5])
-    i+=1
+    hp = 2 if scale == 2.0 else 1  # Increase hp by 1 if scale is 2.0
+    enemies.append([x, 0, z, scale, direction, 0.5, hp])
+    i += 1
 
 def draw_text2(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
+    # Draw text in 2D overlay mode
     glDisable(GL_DEPTH_TEST)
 
     # Save current matrix modes
@@ -67,6 +76,7 @@ def draw_text2(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
 
 
 def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
+    # Draw text in 2D overlay mode with default white color
     glColor3f(1,1,1)
     glMatrixMode(GL_PROJECTION)
     glPushMatrix()
@@ -84,6 +94,7 @@ def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
     glMatrixMode(GL_MODELVIEW)
 
 def draw_player():
+    # Render the player model with body, head, and cannon
     glPushMatrix()
     glTranslatef(playerPosition[0], playerPosition[1], playerPosition[2])
     glRotatef(playerAngle, 0, 1, 0)
@@ -112,6 +123,7 @@ def draw_player():
     glPopMatrix()
 
 def draw_bullets():
+    # Render all bullets in the game
     global bullets
     for b in bullets:
         glPushMatrix()
@@ -121,6 +133,7 @@ def draw_bullets():
         glPopMatrix()
 
 def draw_enemies():
+    # Render all enemies with their attributes
     for e in enemies:
         glPushMatrix()
         glTranslatef(e[0], e[1], e[2])
@@ -133,6 +146,7 @@ def draw_enemies():
         glPopMatrix()
 
 def draw_grid():
+    # Render the game grid and walls with alternating colors
     step = 60
     size = GRID_LENGTH
     toggle = True
@@ -191,6 +205,7 @@ def draw_grid():
     glEnd()
 
 def setupCamera():
+    # Configure the camera perspective and position
     global camera_pos
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
@@ -214,26 +229,34 @@ def setupCamera():
         gluLookAt(x, y, z, 0, 0, 0, 0, 1, 0)
 
 def increaseZombieDifficulty(num_new_zombies, speedMultiplier):
+    # Increase difficulty by adding new zombies and adjusting attributes
     global enemies
-    # Increase speed of existing zombies
+    # Increase speed of existing zombies and health after round 3
     for e in enemies:
         e[5] *= speedMultiplier
+        if roundno > 3:
+            e[6] += 1  # Increase health by 1 after round 3
 
-    # Respawn new zombies
+    # Respawn new zombies with randomized scale and hp
     for _ in range(num_new_zombies):
         x = random.randint(-GRID_LENGTH // 2, GRID_LENGTH // 2)
         z = -GRID_LENGTH
-        scale = 1.0
+        scale = 2.0 if random.random() < 0.1 else 1.0  # 10% chance for scale 2.0, otherwise 1.0
         direction = 0.02 * speedMultiplier  # Higher speed for new zombies
-        enemies.append([x, 0, z, scale, direction, speedMultiplier])
+        hp = 2 if scale == 2.0 else 1  # Set health based on scale
+        if roundno > 3:
+            hp += 1  # Increase health by 1 after round 3
+        enemies.append([x, 0, z, scale, direction, speedMultiplier, hp])
 
 def idle():
+    # Main game loop for updating game state
+    # Handles enemy movement, bullet updates, and collision detection
     global enemies, bullets, maxMissedBullets, playerLife, gameScore, playerPosition, gameOver, playerAngle, roundno, gamePaused, roundTransition
 
     if gameOver or gamePaused or roundTransition:
         glutPostRedisplay()
         return
-    
+
     if gameScore == 10 and roundno == 1:
         roundno = 2
         roundTransition = True
@@ -267,7 +290,6 @@ def idle():
                 break
             else:
                 removeBullets.append(i)
-            
 
     bulletHit = []
     for bi, b in enumerate(bullets):
@@ -275,17 +297,17 @@ def idle():
             dist = math.sqrt((b[0] - e[0]) ** 2 + (b[2] - e[2]) ** 2)
             if dist < 25: 
                 bulletHit.append(bi)
-                gameScore += 1
-                respawnEnemy(e)
+                e[6] -= 1  # Reduce enemy health
+                if e[6] <= 0:  # Enemy dies when health is 0
+                    gameScore += 1
+                    respawnEnemy(e)
                 break
 
- 
     removeBullets = list(set(removeBullets + bulletHit))
     removeBullets.sort(reverse=True)
     for i in removeBullets:
         if 0 <= i < len(bullets):
             bullets.pop(i)
-
 
     for e in enemies:
         dx = playerPosition[0] - e[0]
@@ -302,16 +324,21 @@ def idle():
                 gameOver = True
                 enemies = []
 
-
     glutPostRedisplay()
+
 def respawnEnemy(enemy):
+    # Respawn an enemy with randomized attributes
     new_x = random.randint(-GRID_LENGTH-100, GRID_LENGTH-100)
     new_z = -GRID_LENGTH 
     enemy[0] = new_x
     enemy[2] = new_z
-
+    enemy[3] = 2.0 if random.random() < 0.1 else 1.0  # Randomize scale
+    enemy[6] = 2 if enemy[3] == 2.0 else 1  # Reset health based on scale
+    if roundno > 3:
+        enemy[6] += 1  # Increase health by 1 after round 3
 
 def keyboardListener(key, x, y):
+    # Handle keyboard input for player actions and game controls
     global playerPosition, playerAngle, bullets, playerLife, maxMissedBullets, gameScore, gameOver, enemies, followCamera, roundno, gamePaused, roundTransition
 
     if key == b'r' or key == b'R':
@@ -331,9 +358,10 @@ def keyboardListener(key, x, y):
         while i < numOfEnemies:
             x = random.randint(-GRID_LENGTH - 20, GRID_LENGTH - 20)
             z = -GRID_LENGTH
-            scale = 1.0
+            scale = 2.0 if random.random() < 0.1 else 1.0  # 10% chance for scale 2.0, otherwise 1.0
             direction = 0.01
-            enemies.append([x, 0, z, scale, direction, 0.5])
+            hp = 2 if scale == 2.0 else 1  # Increase hp by 1 if scale is 2.0
+            enemies.append([x, 0, z, scale, direction, 0.5, hp])
             i += 1
 
     if gameOver:
@@ -361,6 +389,7 @@ def keyboardListener(key, x, y):
     playerPosition[0] = max(-GRID_LENGTH, min(GRID_LENGTH, playerPosition[0]))
 
 def mouseListener(button, state, x, y):
+    # Handle mouse input for shooting and toggling camera mode
     global gameOver
     if gameOver:
         return
@@ -373,6 +402,7 @@ def mouseListener(button, state, x, y):
         followCamera = not followCamera
 
 def specialKeyListener(key, x, y):
+    # Handle special key input for camera movement
     global camera_pos, gameOver
     if gameOver:
         return
@@ -392,6 +422,7 @@ def specialKeyListener(key, x, y):
 
 
 def showScreen():
+    # Render the game screen with all elements and UI
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
     glViewport(0, 0, 1000, 800)
@@ -406,7 +437,7 @@ def showScreen():
         draw_text(10, 770, "Game Over! Press 'R' to restart.")
         draw_text(10, 740, f"Final Score: {gameScore}")
     elif roundTransition:
-    # Draw white background square
+        # Draw white background square
         glDisable(GL_DEPTH_TEST)
 
         # Switch to orthographic projection
@@ -433,7 +464,6 @@ def showScreen():
         draw_text2(400, 410, f"Congrats on clearing Round {roundno - 1}!")
         draw_text2(400, 380, "Press Enter to start the next round.")
 
-
         # Restore matrices
         glPopMatrix()  # MODELVIEW
         glMatrixMode(GL_PROJECTION)
@@ -450,6 +480,7 @@ def showScreen():
     glutSwapBuffers()
 
 def main():
+    # Initialize the game and start the main loop
     glutInit()
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
     glutInitWindowSize(1000, 800)

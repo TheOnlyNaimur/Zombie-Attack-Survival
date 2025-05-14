@@ -87,50 +87,7 @@ def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
     glPopMatrix()
     glMatrixMode(GL_MODELVIEW)
 
-def draw_health_bar(x, y, z, hp, max_hp):
-    # Convert 3D position to 2D screen coordinates
-    glMatrixMode(GL_PROJECTION)
-    glPushMatrix()
-    glLoadIdentity()
-    gluOrtho2D(0, 1000, 0, 800)
-    glMatrixMode(GL_MODELVIEW)
-    glPushMatrix()
-    glLoadIdentity()
 
-    # Get window coordinates
-    modelview = glGetDoublev(GL_MODELVIEW_MATRIX)
-    projection = glGetDoublev(GL_PROJECTION_MATRIX)
-    viewport = glGetIntegerv(GL_VIEWPORT)
-    win_pos = gluProject(x, y + 40, z, modelview, projection, viewport)
-
-    # Disable depth test for 2D overlay
-    glDisable(GL_DEPTH_TEST)
-
-    # Draw health bar background (red)
-    glColor3f(1.0, 0.0, 0.0)
-    glBegin(GL_QUADS)
-    glVertex2f(win_pos[0] - 20, win_pos[1])
-    glVertex2f(win_pos[0] + 20, win_pos[1])
-    glVertex2f(win_pos[0] + 20, win_pos[1] + 5)
-    glVertex2f(win_pos[0] - 20, win_pos[1] + 5)
-    glEnd()
-
-    # Draw health bar foreground (green)
-    health_width = (hp / max_hp) * 40
-    glColor3f(0.0, 1.0, 0.0)
-    glBegin(GL_QUADS)
-    glVertex2f(win_pos[0] - 20, win_pos[1])
-    glVertex2f(win_pos[0] - 20 + health_width, win_pos[1])
-    glVertex2f(win_pos[0] - 20 + health_width, win_pos[1] + 5)
-    glVertex2f(win_pos[0] - 20, win_pos[1] + 5)
-    glEnd()
-
-    # Restore matrices and depth test
-    glPopMatrix()
-    glMatrixMode(GL_PROJECTION)
-    glPopMatrix()
-    glMatrixMode(GL_MODELVIEW)
-    glEnable(GL_DEPTH_TEST)
 
 def draw_player():
     glPushMatrix()
@@ -162,8 +119,7 @@ def draw_player():
     gluCylinder(gluNewQuadric(), 5, 5, 30, 10, 10)
     glPopMatrix()
     glPopMatrix()
-    # Draw player's health bar
-    draw_health_bar(playerPosition[0], playerPosition[1], playerPosition[2], playerLife, playerMaxLife)
+
 
 def draw_bullets():
     global bullets
@@ -223,7 +179,7 @@ def draw_zombie(x, y, z, scale, hp, max_hp):
     gluCylinder(gluNewQuadric(), 1.5, 1.5, 20, 10, 10)
     glPopMatrix()
     glPopMatrix()
-    draw_health_bar(x, y, z, hp, max_hp)
+
 
 def draw_enemies():
     for e in enemies:

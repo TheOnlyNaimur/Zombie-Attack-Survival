@@ -1,4 +1,4 @@
-# Import necessary OpenGL modules and libraries
+
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -6,37 +6,45 @@ from OpenGL.GLUT.fonts import GLUT_BITMAP_HELVETICA_18
 import math
 import random
 
-# Initialize global variables for camera, player, and game state
-camera_pos = (0, 500, 500)  # Camera position
-fovY = 120  # Field of view
-GRID_LENGTH = 700  # Grid size
-rand_var = 423  # Random seed
 
-# Player attributes
-playerPosition = [0, 0, 620]  # Player's position
-playerAngle = 180  # Player's angle
-movementSpeed = 10  # Player's movement speed
-roundno = 1  # Current round number
+camera_pos = (0, 500, 500)  
+fovY = 120 
+GRID_LENGTH = 700 
+rand_var = 423  
 
-# Game state variables
-bullets = []  # List of bullets
-maxMissedBullets = 20  # Maximum missed bullets allowed
-gameScore = 0  # Player's score
 
-# Enemy attributes
-enemies = []  # List of enemies
-numOfEnemies = 20  # Initial number of enemies
+
+CAMERA_X_MIN = -GRID_LENGTH
+CAMERA_X_MAX = GRID_LENGTH
+CAMERA_Y_MIN = 100
+CAMERA_Y_MAX = 800
+
+
+playerPosition = [0, 0, 620]  
+playerAngle = 180  
+movementSpeed = 10  
+roundno = 1  
+
+
+bullets = [] 
+maxMissedBullets = 20  
+gameScore = 0  
+
+
+enemies = []  
+numOfEnemies = 20  
 
 # Game control flags
 followCamera = False  # Toggle for follow camera
-playerLife = 5  # Player's life
-gameOver = False  # Game over flag
-gamePaused = False  # Game paused flag
-roundTransition = False  # Round transition flag
+playerLife = 5  
+gameOver = False 
+gamePaused = False  
+roundTransition = False  
 
 # Initialize enemies with randomized attributes
 # 10% of enemies have scale 2.0 and increased health
 # Remaining enemies have scale 1.0 and default health
+
 i = 0
 while i < numOfEnemies:
     x = random.randint(-GRID_LENGTH - 20, GRID_LENGTH - 20)
@@ -44,8 +52,10 @@ while i < numOfEnemies:
     scale = 2.0 if random.random() < 0.1 else 1.0  # 10% chance for scale 2.0, otherwise 1.0
     direction = 0.01
     hp = 2 if scale == 2.0 else 1  # Increase hp by 1 if scale is 2.0
-    enemies.append([x, 0, z, scale, direction, 0.5, hp])
+    enemies.append([x, 25, z, scale, direction, 0.5, hp])
     i += 1
+
+    
 
 def draw_text2(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
     # Draw text in 2D overlay mode
@@ -76,7 +86,7 @@ def draw_text2(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
 
 
 def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
-    # Draw text in 2D overlay mode with default white color
+   
     glColor3f(1,1,1)
     glMatrixMode(GL_PROJECTION)
     glPushMatrix()
@@ -94,33 +104,49 @@ def draw_text(x, y, text, font=GLUT_BITMAP_HELVETICA_18):
     glMatrixMode(GL_MODELVIEW)
 
 def draw_player():
-    # Render the player model with body, head, and cannon
+   
     glPushMatrix()
     glTranslatef(playerPosition[0], playerPosition[1], playerPosition[2])
     glRotatef(playerAngle, 0, 1, 0)
 
-    # Body (cuboid)
+    # Body 
     glPushMatrix()
     glScalef(1, 2, 1)
     glColor3f(0.5, 0.5, 1)
     glutSolidCube(30)
     glPopMatrix()
 
-    # Head (sphere)
+    # Head 
     glPushMatrix()
     glTranslatef(0, 35, 0)
     glColor3f(1, 0.8, 0.6)
     glutSolidSphere(15, 10, 10)
     glPopMatrix()
 
-    # canon (cylinder)
+    # Eyes
+    glPushMatrix()
+    glColor3f(0, 0, 0)
+    glTranslatef(-5, 38, 12) 
+    glutSolidSphere(2, 10, 10)
+    glPopMatrix()
+
+    glPushMatrix()
+    glColor3f(0, 0, 0)
+    glTranslatef(5, 38, 12) 
+    glutSolidSphere(2, 10, 10)
+    glPopMatrix()
+
+    # Cannon 
     glPushMatrix()
     glTranslatef(0, 10, 15)  
     glColor3f(0, 0, 0)
     gluCylinder(gluNewQuadric(), 5, 5, 30, 10, 10)
     glPopMatrix()
 
+
+
     glPopMatrix()
+
 
 def draw_bullets():
     # Render all bullets in the game
@@ -132,24 +158,410 @@ def draw_bullets():
         glutSolidCube(10)
         glPopMatrix()
 
+
+def draw_zombie(x, y, z, scale):
+    glPushMatrix()
+    glTranslatef(x, y, z)
+    glScalef(scale, scale, scale)
+
+ 
+    glPushMatrix()
+    glColor3f(0.3, 0.6, 0.3)  
+    glScalef(1.1, 1.5, 0.5)
+    glutSolidCube(20)
+    glPopMatrix()
+
+
+
+    # Head
+    glPushMatrix()
+    glTranslatef(0, 25, 0)
+    glColor3f(0.4, 0.8, 0.4) 
+    glutSolidSphere(10, 10, 10)
+    glPopMatrix()
+
+    # Eyes
+    glPushMatrix()
+    glTranslatef(-3, 28, 8)
+    glColor3f(1, 0, 0) 
+    glutSolidSphere(1.5, 5, 5)
+    glPopMatrix()
+
+    glPushMatrix()
+    glTranslatef(3, 28, 8)
+    glColor3f(1, 0, 0)
+    glutSolidSphere(1.5, 5, 5)
+    glPopMatrix()
+
+    # Arms 
+    glPushMatrix()
+    glColor3f(0.15, 0.35, 0.15)
+    glTranslatef(-13, 10, 0)
+    glRotatef(90, 0, 0, 1)
+    gluCylinder(gluNewQuadric(), 1.5, 1.5, 15, 10, 10)
+    glPopMatrix()
+
+    glPushMatrix()
+    glColor3f(0.15, 0.35, 0.15)
+    glTranslatef(13, 10, 0)
+    glRotatef(-90, 0, 0, 1)
+    gluCylinder(gluNewQuadric(), 1.5, 1.5, 15, 10, 10)
+    glPopMatrix()
+
+    # Legs 
+    glPushMatrix()
+    glColor3f(0.05, 0.2, 0.05) 
+    glTranslatef(-10, -25, 0)
+    glRotatef(-90, 1, 0, 0)
+    gluCylinder(gluNewQuadric(), 1.5, 1.5, 20, 10, 10)
+    glPopMatrix()
+
+    glPushMatrix()
+    glColor3f(0.05, 0.2, 0.05)
+    glTranslatef(10, -25, 0)
+    glRotatef(-90, 1, 0, 0)
+    gluCylinder(gluNewQuadric(), 1.5, 1.5, 20, 10, 10)
+    glPopMatrix()
+
+    glPopMatrix()
+
+
+
+
+
 def draw_enemies():
-    # Render all enemies with their attributes
+    
     for e in enemies:
+        draw_zombie(e[0], e[1], e[2], e[3])
+
+
+
+
+
+
+def drawBuilding(x, y, z):
+    glPushMatrix()
+    glTranslatef(x, y, z)
+    # Building body
+    glColor3f(0.4, 0.4, 0.4)  # Dull gray for abandoned look
+    glPushMatrix()
+    glScalef(60, 280, 60)  # Width, height, depth
+    glutSolidCube(1)
+    glPopMatrix()
+    # Windows (semi-transparent quads on all four sides, 8 per face at top)
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    glColor4f(1.0, 0.8, 0.5, 0.9)  #
+    # Front face 
+    glBegin(GL_QUADS)
+    # Left side, top row 
+    glVertex3f(-20, 100, 30.1)  
+    glVertex3f(-20, 120, 30.1)
+    glVertex3f(-5, 120, 30.1)
+    glVertex3f(-5, 100, 30.1)
+    # Left side, bottom row 
+    glVertex3f(-20, 80, 30.1)
+    glVertex3f(-20, 100, 30.1)
+    glVertex3f(-5, 100, 30.1)
+    glVertex3f(-5, 80, 30.1)
+    # Right side, top row 
+    glVertex3f(5, 100, 30.1)
+    glVertex3f(5, 120, 30.1)
+    glVertex3f(20, 120, 30.1)
+    glVertex3f(20, 100, 30.1)
+    # Right side, bottom row 
+    glVertex3f(5, 80, 30.1)
+    glVertex3f(5, 100, 30.1)
+    glVertex3f(20, 100, 30.1)
+    glVertex3f(20, 80, 30.1)
+    glEnd()
+    # Back face 
+    glBegin(GL_QUADS)
+    # Left side, top row
+    glVertex3f(-20, 100, -30.1)
+    glVertex3f(-20, 120, -30.1)
+    glVertex3f(-5, 120, -30.1)
+    glVertex3f(-5, 100, -30.1)
+    # Left side, bottom row
+    glVertex3f(-20, 80, -30.1)
+    glVertex3f(-20, 100, -30.1)
+    glVertex3f(-5, 100, -30.1)
+    glVertex3f(-5, 80, -30.1)
+    # Right side, top row
+    glVertex3f(5, 100, -30.1)
+    glVertex3f(5, 120, -30.1)
+    glVertex3f(20, 120, -30.1)
+    glVertex3f(20, 100, -30.1)
+    # Right side, bottom row
+    glVertex3f(5, 80, -30.1)
+    glVertex3f(5, 100, -30.1)
+    glVertex3f(20, 100, -30.1)
+    glVertex3f(20, 80, -30.1)
+    glEnd()
+    # Left face 
+    glBegin(GL_QUADS)
+    # Back side, top row
+    glVertex3f(-30.1, 100, -20)
+    glVertex3f(-30.1, 120, -20)
+    glVertex3f(-30.1, 120, -5)
+    glVertex3f(-30.1, 100, -5)
+    # Back side, bottom row
+    glVertex3f(-30.1, 80, -20)
+    glVertex3f(-30.1, 100, -20)
+    glVertex3f(-30.1, 100, -5)
+    glVertex3f(-30.1, 80, -5)
+    # Front side, top row
+    glVertex3f(-30.1, 100, 5)
+    glVertex3f(-30.1, 120, 5)
+    glVertex3f(-30.1, 120, 20)
+    glVertex3f(-30.1, 100, 20)
+    # Front side, bottom row
+    glVertex3f(-30.1, 80, 5)
+    glVertex3f(-30.1, 100, 5)
+    glVertex3f(-30.1, 100, 20)
+    glVertex3f(-30.1, 80, 20)
+    glEnd()
+
+
+    # Right face 
+    glBegin(GL_QUADS)
+
+
+    # Back side, top row
+    glVertex3f(30.1, 100, -20)
+    glVertex3f(30.1, 120, -20)
+    glVertex3f(30.1, 100, -5)
+    glVertex3f(30.1, 120, -5)
+
+
+
+    # Back side, bottom row
+    glVertex3f(30.1, 80, -20)
+    glVertex3f(30.1, 100, -20)
+    glVertex3f(30.1, 100, -5)
+    glVertex3f(30.1, 80, -5)
+
+
+    # Front side, top row
+    glVertex3f(30.1, 100, 5)
+    glVertex3f(30.1, 120, 5)
+    glVertex3f(30.1, 120, 20)
+    glVertex3f(30.1, 100, 20)
+
+
+
+    # Front side, bottom row
+    glVertex3f(30.1, 80, 5)
+    glVertex3f(30.1, 100, 5)
+    glVertex3f(30.1, 100, 20)
+    glVertex3f(30.1, 80, 20)
+    glEnd()
+    glDisable(GL_BLEND)
+    glPopMatrix()
+
+
+def drawRegularTree(x, z):
+    glPushMatrix()
+    glTranslatef(x, 0, z)
+    # Draw tree trunk 
+    glColor3f(0.25, 0.12, 0.05) 
+    glPushMatrix()
+    glRotatef(-90, 1, 0, 0)  
+    gluCylinder(gluNewQuadric(), 10, 10, 70, 10, 10)  
+    glPopMatrix()
+    # Draw tree top 
+    glColor3f(0.05, 0.15, 0.05) 
+    glPushMatrix()
+    glTranslatef(0, 70, 0)  
+    glutSolidSphere(40, 10, 10)
+    glPopMatrix()
+    glPopMatrix()
+
+
+
+def drawTrees():
+    
+    glEnable(GL_DEPTH_TEST)
+    glMatrixMode(GL_MODELVIEW)
+    glPushMatrix()
+
+    #  tree positions 
+    offset_from_wall = 50  
+    tree_spacing = 160    
+    
+   
+    left_wall_trees = [(-GRID_LENGTH + offset_from_wall, z) 
+                      for z in range(-GRID_LENGTH + 100, GRID_LENGTH - 100, tree_spacing)]
+    
+    right_wall_trees = [(GRID_LENGTH - offset_from_wall, z) 
+                       for z in range(-GRID_LENGTH + 100, GRID_LENGTH - 100, tree_spacing)]
+    
+   
+    top_wall_trees = [(x, -GRID_LENGTH + offset_from_wall) 
+                     for x in range(-GRID_LENGTH + 100, GRID_LENGTH - 100, tree_spacing)]
+    
+    all_tree_positions = left_wall_trees + right_wall_trees + top_wall_trees
+    
+  
+    building_positions = [
+        (-650, 80),    # Left wall, 
+        (-650, 420),   # Left wall, 
+        (-650, -320),   # Left wall, 
+        (650, -260),   # Right wall, 
+        (650, 120),   # Left wall, 
+        (650, 420)    
+    ]
+    
+   
+    regular_tree_positions = [
+
+        (-650, 280),    # Left wall,
+        (-650, -120), 
+         (-650, -30),   # Left wall, 
+        (-650, -480),   # Left wall, 
+        (650, -160),   # Right wall,
+        (650, 220),   # Left wall,
+        (650, 330),     # Right wall, 
+
+       # Top wall trees
+        (-30, -650),
+        (-80, -650),
+        (-150, -650),    
+        (-200, -650), 
+        (-220, -650), 
+        (-270, -650), 
+        (-320, -650),  
+        (-390, -650),  
+        (-460, -650), 
+        (-550, -650), 
+        (-630, -650),
+        (80, -650),
+        (180, -650),  
+        (200, -650), 
+        (270, -650), 
+        (320, -650),  
+        (390, -650),  
+        (460, -650), 
+        (550, -650), 
+        (630, -650),     
+  
+    ]
+    
+    # Remove building 
+    dead_tree_positions = [pos for pos in all_tree_positions if pos not in building_positions and pos not in regular_tree_positions]
+
+   
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+  
+    for x, z in dead_tree_positions:
         glPushMatrix()
-        glTranslatef(e[0], e[1], e[2])
-        glScalef(e[3], e[3], e[3])
-        glColor3f(1, 0, 0)
-        glutSolidSphere(20, 10, 10)
-        glTranslatef(0, 25, 0)
-        glColor3f(0.8, 0, 0)
-        glutSolidSphere(15, 10, 10)
+        glTranslatef(x, 0, z)
+        
+        
+        #random.seed(x * 1000 + z)  # Unique seed per tree position
+        tree_rotation = random.uniform(0, 360)  
+
+        # Trunk 
+        glColor3f(0.2, 0.1, 0.05)  
+        glPushMatrix()
+        glRotatef(-90, 1, 0, 0) 
+        gluCylinder(gluNewQuadric(), 8, 6, 80, 10, 10)  
         glPopMatrix()
 
+        # Broken top
+        glPushMatrix()
+        glTranslatef(0, 80, 0)  
+        glRotatef(tree_rotation, 0, 1, 0)  
+        gluCylinder(gluNewQuadric(), 6, 0, 15, 6, 6) 
+        glPopMatrix()
+
+        # Branches
+        branch_length = 40
+
+        # Branch 1 
+        glPushMatrix()
+        glTranslatef(0, 60, 0)
+        glRotatef(-45, 0, 0, 1)  
+        glRotatef(30, 1, 0, 0)  
+        glRotatef(random.uniform(-20, 20), 0, 1, 0)  
+        gluCylinder(gluNewQuadric(), 3, 1, branch_length, 6, 6)
+        glPopMatrix()
+
+        # Branch 2
+        glPushMatrix()
+        glTranslatef(0, 70, 0)
+        glRotatef(45, 0, 0, 1) 
+        glRotatef(20, 1, 0, 0)   
+        glRotatef(random.uniform(-15, 15), 0, 1, 0)  
+        gluCylinder(gluNewQuadric(), 4, 1, branch_length * 0.8, 6, 6)
+        glPopMatrix()
+
+        # Branch 3 
+        glPushMatrix()
+        glTranslatef(0, 50, 0)
+        glRotatef(180, 0, 1, 0)  
+        glRotatef(-15, 1, 0, 0)  
+        glRotatef(random.uniform(-15, 15), 0, 1, 0) 
+        gluCylinder(gluNewQuadric(), 3, 0.5, branch_length * 0.7, 6, 6)
+        glPopMatrix()
+
+
+        # New Branch 4 
+        glPushMatrix()
+        glTranslatef(0, 40, 0)
+        glRotatef(-60, 0, 0, 1)  
+        glRotatef(25, 1, 0, 0)   
+        glRotatef(random.uniform(-20, 20), 0, 1, 0) 
+        gluCylinder(gluNewQuadric(), 2.5, 1, branch_length * 0.6, 6, 6)
+        glPopMatrix()
+
+        #New Branch 5 
+        glPushMatrix()
+        glTranslatef(0, 45, 0)
+        glRotatef(60, 0, 0, 1) 
+        glRotatef(30, 1, 0, 0)  
+        glRotatef(random.uniform(-15, 15), 0, 1, 0)  
+        gluCylinder(gluNewQuadric(), 2.5, 1, branch_length * 0.7, 6, 6)
+        glPopMatrix()
+
+        #New Branch 6
+        glPushMatrix()
+        glTranslatef(0, 75, 0)
+        glRotatef(random.uniform(0, 360), 0, 1, 0)  
+        glRotatef(-30, 1, 0, 0)  
+        gluCylinder(gluNewQuadric(), 3, 0.5, branch_length * 0.5, 6, 6)
+        glPopMatrix()
+
+        #  Glowing red eyes hidden in the tree
+        if random.random() > 0.7:  
+            glPushMatrix()
+            glTranslatef(random.uniform(-5, 5), 50, random.uniform(-5, 5))
+            glColor3f(1, 0, 0)  
+            glutSolidSphere(2, 5, 5)
+            glPopMatrix()
+
+        glPopMatrix()
+    
+   
+    for x, z in regular_tree_positions:
+        drawRegularTree(x, z)
+    
+   
+    for x, z in building_positions:
+        drawBuilding(x, 0, z)
+    
+    glDisable(GL_BLEND)
+    
+   
+    glPopMatrix()
+    glEnable(GL_DEPTH_TEST)
+
 def draw_grid():
-    # Render the game grid and walls with alternating colors
-    step = 60
+   
+    step = 50
     size = GRID_LENGTH
-    toggle = True
     for x in range(-size, size, step):
         for z in range(-size, size, step):
             glBegin(GL_QUADS)
@@ -157,22 +569,22 @@ def draw_grid():
             if 550 <= z <= 700:
                 glColor3f(0.6, 1.0, 0.6)  # Light green
             else:
-                # Alternate colors for the rest of the grid
-                if toggle:
-                    glColor3f(0.0, 0.5, 0.0)  # Deep Green
-                else:
-                    glColor3f(1.0, 1.0, 0.2)  # Yellow
+                glColor3f(0.2, 0.2, 0.0)  # Yellowp 
             glVertex3f(x, 0, z)
             glVertex3f(x + step, 0, z)
             glVertex3f(x + step, 0, z + step)
             glVertex3f(x, 0, z + step)
             glEnd()
-            toggle = not toggle
-        toggle = not toggle
 
-    wallHeight = 100
+    drawTrees() 
 
-    glColor3f(0.53, 0.81, 0.92)  
+    wallHeight = 0
+
+      
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+    glColor4f(0.53, 0.81, 0.92, 0.7)  
     glBegin(GL_QUADS)
     glVertex3f(-size, 0, -size)
     glVertex3f(size, 0, -size)
@@ -180,7 +592,7 @@ def draw_grid():
     glVertex3f(-size, wallHeight, -size)
     glEnd()
 
-    glColor3f(0.0, 1.0, 1.0)
+    glColor4f(0.3, 0.3, 0.3, 0.7) 
     glBegin(GL_QUADS)
     glVertex3f(-size, 0, size)
     glVertex3f(size, 0, size)
@@ -188,7 +600,7 @@ def draw_grid():
     glVertex3f(-size, wallHeight, size)
     glEnd()
 
-    glColor3f(1.0, 0.0, 1.0)
+    glColor4f(0.3, 0.3, 0.3, 0.7) 
     glBegin(GL_QUADS)
     glVertex3f(-size, 0, -size)
     glVertex3f(-size, 0, size)
@@ -196,7 +608,7 @@ def draw_grid():
     glVertex3f(-size, wallHeight, -size)
     glEnd()
 
-    glColor3f(0.0, 0.5, 1.0)
+    glColor3f(0.3, 0.3, 0.3)
     glBegin(GL_QUADS)
     glVertex3f(size, 0, -size)
     glVertex3f(size, 0, size)
@@ -205,7 +617,7 @@ def draw_grid():
     glEnd()
 
 def setupCamera():
-    # Configure the camera perspective and position
+    
     global camera_pos
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
@@ -220,7 +632,7 @@ def setupCamera():
         lz = math.cos(angle_rad)
 
         gluLookAt(
-            px, py + 60, pz, 
+            px, py + 80, pz, 
             px + lx * 100, py + 40, pz + lz * 100, 
             0, 1, 0 
         )
@@ -229,7 +641,7 @@ def setupCamera():
         gluLookAt(x, y, z, 0, 0, 0, 0, 1, 0)
 
 def increaseZombieDifficulty(num_new_zombies, speedMultiplier):
-    # Increase difficulty by adding new zombies and adjusting attributes
+    
     global enemies
     # Increase speed of existing zombies and health after round 3
     for e in enemies:
@@ -331,15 +743,15 @@ def respawnEnemy(enemy):
     new_x = random.randint(-GRID_LENGTH-100, GRID_LENGTH-100)
     new_z = -GRID_LENGTH 
     enemy[0] = new_x
+    enemy[1] = 25
     enemy[2] = new_z
-    enemy[3] = 2.0 if random.random() < 0.1 else 1.0  
-    print("y???:",enemy[0], enemy[1], enemy[2])# Randomize scale
+    enemy[3] = 2.0 if random.random() < 0.1 else 1.0  # Randomize scale
     enemy[6] = 2 if enemy[3] == 2.0 else 1  # Reset health based on scale
     if roundno > 3:
         enemy[6] += 1  # Increase health by 1 after round 3
 
 def keyboardListener(key, x, y):
-    # Handle keyboard input for player actions and game controls
+   
     global playerPosition, playerAngle, bullets, playerLife, maxMissedBullets, gameScore, gameOver, enemies, followCamera, roundno, gamePaused, roundTransition
 
     if key == b'r' or key == b'R':
@@ -384,7 +796,7 @@ def keyboardListener(key, x, y):
         playerPosition[0] -= movementSpeed
     elif key == b'd' or key == b'D':
         playerPosition[0] += movementSpeed
-    elif key == b'n' or key == b'N':
+    elif key == b'n' or key == b'N':  #cheat code
         maxMissedBullets += 10
 
     playerPosition[0] = max(-GRID_LENGTH, min(GRID_LENGTH, playerPosition[0]))
@@ -410,13 +822,13 @@ def specialKeyListener(key, x, y):
     
     cam_x, cam_y, cam_z = camera_pos
     if key == GLUT_KEY_LEFT:
-        cam_x -= 10
+        cam_x = max(CAMERA_X_MIN, cam_x - 10)
     if key == GLUT_KEY_RIGHT:
-        cam_x += 10
+        cam_x = min(CAMERA_X_MAX, cam_x + 10)
     if key == GLUT_KEY_UP:
-        cam_y += 10
+        cam_y = min(CAMERA_Y_MAX, cam_y + 10)
     if key == GLUT_KEY_DOWN:
-        cam_y -= 10
+        cam_y = max(CAMERA_Y_MIN, cam_y - 10)
     camera_pos = (cam_x, cam_y, cam_z)
 
     glutPostRedisplay()
@@ -465,10 +877,10 @@ def showScreen():
         draw_text2(400, 410, f"Congrats on clearing Round {roundno - 1}!")
         draw_text2(400, 380, "Press Enter to start the next round.")
 
-        # Restore matrices
-        glPopMatrix()  # MODELVIEW
+      
+        glPopMatrix()  
         glMatrixMode(GL_PROJECTION)
-        glPopMatrix()  # PROJECTION
+        glPopMatrix()  
         glMatrixMode(GL_MODELVIEW)
 
         glEnable(GL_DEPTH_TEST)
@@ -481,12 +893,12 @@ def showScreen():
     glutSwapBuffers()
 
 def main():
-    # Initialize the game and start the main loop
+    
     glutInit()
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
     glutInitWindowSize(1000, 800)
     glutInitWindowPosition(0, 0)
-    glutCreateWindow(b"Bullet Frenzy")
+    glutCreateWindow(b"Zombie Survival")
     glutDisplayFunc(showScreen)
     glutIdleFunc(idle)
     glutKeyboardFunc(keyboardListener)

@@ -461,7 +461,11 @@ def drawTrees():
         
         
         #random.seed(x * 1000 + z)  # Unique seed per tree position
-        tree_rotation = random.uniform(0, 360)  
+      
+        # tree_rotation = tree_rng.uniform(0, 360) 
+        tree_rng = random.Random(x * 1000 + z)  # Local RNG for this tree
+        tree_rotation = tree_rng.uniform(0, 360)
+ 
 
         # Trunk 
         glColor3f(0.2, 0.1, 0.05)  
@@ -485,7 +489,7 @@ def drawTrees():
         glTranslatef(0, 60, 0)
         glRotatef(-45, 0, 0, 1)  
         glRotatef(30, 1, 0, 0)  
-        glRotatef(random.uniform(-20, 20), 0, 1, 0)  
+        glRotatef(tree_rng.uniform(-20, 20), 0, 1, 0)  
         gluCylinder(gluNewQuadric(), 3, 1, branch_length, 6, 6)
         glPopMatrix()
 
@@ -494,7 +498,7 @@ def drawTrees():
         glTranslatef(0, 70, 0)
         glRotatef(45, 0, 0, 1) 
         glRotatef(20, 1, 0, 0)   
-        glRotatef(random.uniform(-15, 15), 0, 1, 0)  
+        glRotatef(tree_rng.uniform(-15, 15), 0, 1, 0)  
         gluCylinder(gluNewQuadric(), 4, 1, branch_length * 0.8, 6, 6)
         glPopMatrix()
 
@@ -503,7 +507,7 @@ def drawTrees():
         glTranslatef(0, 50, 0)
         glRotatef(180, 0, 1, 0)  
         glRotatef(-15, 1, 0, 0)  
-        glRotatef(random.uniform(-15, 15), 0, 1, 0) 
+        glRotatef(tree_rng.uniform(-15, 15), 0, 1, 0) 
         gluCylinder(gluNewQuadric(), 3, 0.5, branch_length * 0.7, 6, 6)
         glPopMatrix()
 
@@ -513,7 +517,7 @@ def drawTrees():
         glTranslatef(0, 40, 0)
         glRotatef(-60, 0, 0, 1)  
         glRotatef(25, 1, 0, 0)   
-        glRotatef(random.uniform(-20, 20), 0, 1, 0) 
+        glRotatef(tree_rng.uniform(-20, 20), 0, 1, 0) 
         gluCylinder(gluNewQuadric(), 2.5, 1, branch_length * 0.6, 6, 6)
         glPopMatrix()
 
@@ -522,14 +526,14 @@ def drawTrees():
         glTranslatef(0, 45, 0)
         glRotatef(60, 0, 0, 1) 
         glRotatef(30, 1, 0, 0)  
-        glRotatef(random.uniform(-15, 15), 0, 1, 0)  
+        glRotatef(tree_rng.uniform(-15, 15), 0, 1, 0)  
         gluCylinder(gluNewQuadric(), 2.5, 1, branch_length * 0.7, 6, 6)
         glPopMatrix()
 
         #New Branch 6
         glPushMatrix()
         glTranslatef(0, 75, 0)
-        glRotatef(random.uniform(0, 360), 0, 1, 0)  
+        glRotatef(tree_rng.uniform(0, 360), 0, 1, 0)  
         glRotatef(-30, 1, 0, 0)  
         gluCylinder(gluNewQuadric(), 3, 0.5, branch_length * 0.5, 6, 6)
         glPopMatrix()
@@ -537,7 +541,7 @@ def drawTrees():
         #  Glowing red eyes hidden in the tree
         if random.random() > 0.7:  
             glPushMatrix()
-            glTranslatef(random.uniform(-5, 5), 50, random.uniform(-5, 5))
+            glTranslatef(tree_rng.uniform(-5, 5), 50, tree_rng.uniform(-5, 5))
             glColor3f(1, 0, 0)  
             glutSolidSphere(2, 5, 5)
             glPopMatrix()

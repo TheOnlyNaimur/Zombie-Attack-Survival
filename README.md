@@ -4,7 +4,7 @@ A OpenGL Based 3D game
 
 # Zombie Survival Game
 
-![Game Screenshot](screenshot.png) *(Upload a screenshot and replace this text)*
+![Game Screenshot](screenshot.png) 
 
 A 3D first-person shooter survival game built with Python, PyOpenGL, and GLUT. Battle waves of zombies in a post-apocalyptic environment with dynamic camera controls and procedural terrain.
 
